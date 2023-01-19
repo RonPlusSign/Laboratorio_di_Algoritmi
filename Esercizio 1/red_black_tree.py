@@ -129,8 +129,8 @@ def main():
         if not tree.find(number):
             tree.insert(number)
 
-    print(tree.find(5))
-    print(tree.find(2))
+    # print(tree.find(5))
+    # print(tree.find(2))
     print_rb_tree(tree)
 
 
