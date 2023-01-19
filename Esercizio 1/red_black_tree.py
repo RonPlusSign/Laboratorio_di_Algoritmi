@@ -3,10 +3,7 @@ from binary_search_tree import BST
 
 
 class RBT(BST):
-    """
-    Red Black Tree
-
-    """
+    """ Red Black Tree """
 
     def __init__(self):
         """ Constructor """
@@ -68,6 +65,7 @@ class RBT(BST):
     def set_root(self, key: int):
         """ Set the root of the tree """
         self.root = RedBlackNode(key)
+        self.root.color = Color.BLACK
 
     def insert(self, key: int):
         """ Insert a node inside the tree """
@@ -76,17 +74,35 @@ class RBT(BST):
             self.set_root(key)
         else:
             new_node = RedBlackNode(key)
-            super().insert_node(self.root, new_node)
+            parent = None
+            navigator = self.root
+
+            # Search the correct position for the new node iteratively
+            while navigator is not None:  # If it's None, I found a leaf position
+                parent = navigator
+                if new_node.key < navigator.key:
+                    navigator = navigator.left
+                else:
+                    navigator = navigator.right
+            new_node.parent = parent
+            if parent is None:  # Tree was empty
+                self.root = new_node
+            elif new_node.key < parent.key:
+                parent.left = new_node
+            else:
+                parent.right = new_node
+
             self.insert_fixup(new_node)
 
     def insert_fixup(self, node: RedBlackNode):
         """ Fix the red black tree properties after a node inserting """
-        while node.parent is not None and node.parent.color == Color.RED:
+
+        while node.parent is not None and node.parent.parent is not None and node.parent.color == Color.RED:
             if node.parent == node.parent.parent.left:  # Parent is the left child
-                y = node.parent.parent.right  # Uncle node
-                if y.color == Color.RED:  # Case 1: uncle is red
+                uncle = node.parent.parent.right  # Uncle node
+                if uncle is not None and uncle.color == Color.RED:  # Case 1: uncle is red
                     node.parent.color = Color.BLACK
-                    node.color = Color.BLACK
+                    uncle.color = Color.BLACK
                     node.parent.parent.color = Color.RED
                     node = node.parent.parent
                 else:  # Uncle is black
@@ -97,10 +113,10 @@ class RBT(BST):
                     node.parent.parent.color = Color.RED
                     self.right_rotate(node.parent.parent)
             else:  # Parent is the right child
-                y = node.parent.parent.left  # Uncle node
-                if y.color == Color.RED:  # Case 1: uncle is red
+                uncle = node.parent.parent.left  # Uncle node
+                if uncle is not None and uncle.color == Color.RED:  # Case 1: uncle is red
                     node.parent.color = Color.BLACK
-                    node.color = Color.BLACK
+                    uncle.color = Color.BLACK
                     node.parent.parent.color = Color.RED
                     node = node.parent.parent
                 else:  # Uncle is black
@@ -121,8 +137,9 @@ def main():
     tree = RBT()
     # tree.insert(4)
     # tree.insert(5)
-    # for x in range(50, 10, -1):
+    # for x in range(10, 1, -1):
     #     tree.insert(x)
+    #     print_rb_tree(tree)
 
     for _ in range(100):
         number = randint(1, 200)

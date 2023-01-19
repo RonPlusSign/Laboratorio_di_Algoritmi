@@ -27,8 +27,8 @@ def print_rb_tree(tree: RBT):
         return
 
     drawer = Tree()
-    drawer.create_node(tree.root.key, tree.root.key,
-                       data=(str(tree.root.key) + " " + ("(red)" if tree.root.color == Color.RED else "(black)")))
+    drawer.create_node((str(tree.root.key) + " " + ("(red)" if tree.root.color == Color.RED else "(black)")),
+                       tree.root.key)
 
     def add_node(node: Node | RedBlackNode):
         if node.left is not None:
