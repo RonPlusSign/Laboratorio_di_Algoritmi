@@ -3,9 +3,9 @@ class Node:
 
     def __init__(self, key: int):
         """ Constructor """
-        self.key = key
-        self.left = None
-        self.right = None
+        self.key: int = key
+        self.left: Node | None = None
+        self.right: Node | None = None
 
     def get(self):
         """ Get the node key """
