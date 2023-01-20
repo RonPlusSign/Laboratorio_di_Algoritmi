@@ -62,37 +62,28 @@ class RBT(BST):
         replacer.right = node
         node.parent = replacer
 
-    def set_root(self, key: int):
-        """ Set the root of the tree """
-        self.root = RedBlackNode(key)
-        self.root.color = Color.BLACK
-
     def insert(self, key: int):
         """ Insert a node inside the tree """
+        new_node = RedBlackNode(key)
+        parent = None
+        navigator = self.root
 
-        if (self.root is None):
-            self.set_root(key)
-        else:
-            new_node = RedBlackNode(key)
-            parent = None
-            navigator = self.root
-
-            # Search the correct position for the new node iteratively
-            while navigator is not None:  # If it's None, I found a leaf position
-                parent = navigator
-                if new_node.key < navigator.key:
-                    navigator = navigator.left
-                else:
-                    navigator = navigator.right
-            new_node.parent = parent
-            if parent is None:  # Tree was empty
-                self.root = new_node
-            elif new_node.key < parent.key:
-                parent.left = new_node
+        # Search the correct position for the new node iteratively
+        while navigator is not None:  # If it's None, I found a leaf position
+            parent = navigator
+            if new_node.key < navigator.key:
+                navigator = navigator.left
             else:
-                parent.right = new_node
-
-            self.insert_fixup(new_node)
+                navigator = navigator.right
+        new_node.parent = parent
+        if parent is None:  # Tree was empty
+            self.root = new_node
+            self.root.color = Color.BLACK
+        elif new_node.key < parent.key:
+            parent.left = new_node
+        else:
+            parent.right = new_node
+        self.insert_fixup(new_node)
 
     def insert_fixup(self, node: RedBlackNode):
         """ Fix the red black tree properties after a node inserting """
