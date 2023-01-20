@@ -91,6 +91,12 @@ class BST:
             self.postorder_walk(node.right, callback)
         callback(node)
 
+    def get_depth(self, current_node: Node):
+        """ Return the depth of the tree, starting from the given node """
+        if current_node is None:
+            return 0
+        return max([self.get_depth(current_node.left), self.get_depth(current_node.right)]) + 1
+
 
 def main():
     """ Test the Binary Search Tree """
