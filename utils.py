@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import os
+from scipy.interpolate import interp1d
+import numpy as np
 
 
 class PlotLine:
@@ -9,7 +11,12 @@ class PlotLine:
         self.label = label
 
 
-def plot(lines: list[PlotLine], x_title: str, y_title: str, title: str, file_name: str | None = None):
+def plot(lines: list[PlotLine],
+         title: str,
+         x_title: str,
+         y_title: str,
+         file_name: str | None = None,
+         smooth: bool = True):
     """ Plot multiple lines inside a graph """
 
     # Config plot
@@ -19,7 +26,13 @@ def plot(lines: list[PlotLine], x_title: str, y_title: str, title: str, file_nam
 
     # Insert lines in plot
     for line in lines:
-        plt.plot(line.x, line.y, label=line.label)
+        if smooth:
+            evenly_spaced_numbers = np.linspace(min(line.x), max(line.x), 100)
+            f = interp1d(np.array(line.x), np.array(line.y), kind='cubic')
+            y_smooth = f(evenly_spaced_numbers)
+            plt.plot(evenly_spaced_numbers, y_smooth, label=line.label)
+        else:
+            plt.plot(line.x, line.y, label=line.label)
     plt.legend()
 
     # Save the plot to a file
