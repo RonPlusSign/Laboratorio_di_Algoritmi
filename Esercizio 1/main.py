@@ -1,5 +1,4 @@
 import random
-from timeit import default_timer as timer
 import numpy as np
 import csv
 
@@ -14,10 +13,10 @@ def main():
     """
 
     number_of_nodes = []
-    execution_time_bst = []
-    execution_time_rbt = []
+    depth_bst = []
+    depth_rbt = []
 
-    total_iterations = 10_000
+    total_iterations = 1_000
     for n in range(1, total_iterations + 1):
         number_of_nodes.append(n)
 
@@ -27,46 +26,35 @@ def main():
 
         # Test binary search tree
         bst = BST()
-        start = timer()
         for number in random_numbers:
             bst.insert(number)
-        end = timer()
-        execution_time_bst.append((end - start) * 1_000)  # In milliseconds
+        depth_bst.append(bst.get_depth(bst.root))
 
         # Test red black tree
         rbt = RBT()
-        start = timer()
         for number in random_numbers:
             rbt.insert(number)
-        end = timer()
-        execution_time_rbt.append((end - start) * 1_000)  # In milliseconds
+        depth_rbt.append(rbt.get_depth(rbt.root))
 
         if n % 1000 == 0:
             print("Tested performance with " + str(n) + " nodes")
 
     # Plot the performance results
-    bst_line = PlotLine(number_of_nodes, execution_time_bst, "Binary Search Tree")
-    rbt_line = PlotLine(number_of_nodes, execution_time_rbt, "Red Black Tree")
-
-    # Plot linear graph (y=x)
-    # linear_line = PlotLine(number_of_nodes, number_of_nodes, "y = x")
-
-    # Plot logarithm graph (y= log(x))
-    # logarithmic_line = PlotLine(number_of_nodes, [log(i) for i in number_of_nodes], "y = log(x)")
+    bst_line = PlotLine(number_of_nodes, depth_bst, "Binary Search Tree")
+    rbt_line = PlotLine(number_of_nodes, depth_rbt, "Red Black Tree")
 
     # Create and save the plot
-    plot([bst_line, rbt_line],  # , linear_line, logarithmic_line],
-         "Number of nodes", "Execution time (ms)", "Insertion performance", "insertion")
+    plot([bst_line, rbt_line], "Number of nodes", "Number of layers", "Tree depth comparison", "insertion")
 
     print("Plot saved")
 
     # Save data to csv file
     with open("./output/insertion.csv", "w", newline='') as output:
         writer = csv.writer(output)
-        writer.writerow(["Number of nodes", "Binary Search Tree", "Red Black Tree"])
+        writer.writerow(["Nodes", "Depth (BST)", "Depth (RBT)"])
 
         for i in range(len(number_of_nodes)):
-            writer.writerow([number_of_nodes[i], execution_time_bst[i], execution_time_rbt[i]])
+            writer.writerow([number_of_nodes[i], depth_bst[i], depth_rbt[i]])
 
     print("CSV saved")
 
