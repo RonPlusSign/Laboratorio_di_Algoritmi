@@ -1,2 +1,6 @@
 *.pdf
 /.idea/*
+output/*
+/Esercizio 1/output/*
+/Esercizio 2/output/*
+/Esercizio 3/output/*
