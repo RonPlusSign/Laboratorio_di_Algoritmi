@@ -1,0 +1,420 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{imakeidx}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage[italian]{babel}
+\setlength{\parindent}{0pt}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=cyan,
+    pdftitle={Esercizio A - Coda con priorità},
+    pdfpagemode=FullScreen,
+    }
+\makeindex
+
+\title{Esercizio A - Coda con priorità}
+\author{Andrea Delli (matricola 7052940)}
+\date{Marzo/Aprile 2023}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\clearpage
+
+\section{Introduzione}
+
+Questa relazione ha l'obiettivo di confrontare tre diverse implementazioni di una coda con priorità, realizzate attraverso diverse strutture dati, con lo scopo di confrontarne le differenze implementative e le prestazioni.
+
+\vspace{5pt}
+Le strutture dati considerate sono la \textbf{lista concatenata}, la \textbf{lista concatenata ordinata} e l'\textbf{heap}.
+
+\subsection{Ambiente di testing}
+
+Il codice per eseguire i test è stato realizzato in Python, ed eseguito utilizzando l'interprete Python versione 3.11.0.
+
+\vspace{5pt}
+L'ambiente di sviluppo utilizzato è l'IDE PyCharm 2022.3, su un laptop Aspire 7, con un processore Intel Core i7-9750H 2.6HGz, 24GB di RAM, con sistema operativo Windows 11 Home versione 22H2.
+
+\vspace{5pt}
+La seguente relazione è stata scritta in \LaTeX tramite il web editor Overleaf. Il diagramma delle classi in Figura \ref{fig:class_diagram} è stato realizzato tramite il software Lucidchart.
+
+\subsection{Librerie utilizzate}
+
+Il programma Python creato utilizza i seguenti moduli:
+
+\begin{itemize}
+    \item \verb|timeit|: misurazione dei tempi di esecuzione degli algoritmi
+    \par (funzione \verb|timeit.timeit(stmt, number)|)
+    
+    \item \verb|numpy|: generazione di array con valori casuali
+    \par (funzione \verb|numpy.random.randint()|)
+    
+    \item \verb|matplotlib|: generazione dei grafici e delle tabelle, per analizzare visivamente le prestazioni dei due algoritmi
+    \par (funzioni \verb|matplotlib.pyplot.plot()| e \verb|matplotlib.pyplot.table()|)
+    
+    \item \verb|scipy|: rappresentazione migliore dei grafici, per inserire curve che rappresentano l'andamento previsto dei dati
+    \par(funzione \verb|scipy.interpolate.interp1d()|)
+    
+    \item \verb|os|: creazione delle cartelle dove salvare le immagini di grafici e tabelle
+    \par (funzioni \verb|os.path.exists(...)| e \verb|os.makedirs(...)|)
+\end{itemize}
+
+\clearpage
+\section{Cenni teorici}
+
+Una \textbf{coda di priorità} è una struttura dati che contiene un insieme dinamico di elementi, a ognuno dei quali è associato un valore che ne identifica la priorità.
+
+\vspace{5pt}
+In alcuni contesti, ad esempio nello scheduling di alcuni processori, un valore basso di priorità indica una priorità più alta.
+
+In altri contesti invece un valore più alto indica una priorità alta, approccio usato anche ai fini di questa relazione.
+
+\vspace{5pt}
+In una implementazione di una coda con priorità è necessario inserire alcune funzioni per poterla utilizzare. In particolare, è necessario poter inserire dei valori nella coda, che avranno una loro priorità, e sarà necessario poter trovare ed estrarre il valore a priorità più alta.
+
+\subsection{Struttura del codice}
+
+La struttura del codice è rappresentata in Figura \ref{fig:class_diagram} tramite l'utilizzo di un diagramma delle classi.
+
+L'obiettivo è quello di realizzare una coda con priorità utilizzando diverse strutture dati. Per questo motivo, è stata realizzata una classe astratta \textbf{Queue}, che indica i metodi necessari per far funzionare correttamente una coda con priorità. In particolare, ci sono le firme dei metodi per l'inserimento di un valore nella coda, per la ricerca e per l'estrazione del valore massimo in coda.
+
+Le classi derivate da Queue sono classi concrete, che implementano i metodi richiesti in modo tale da rendere utilizzabile la coda con priorità.
+
+\begin{figure}[h]
+    \includegraphics[width=0.9\textwidth]{ES1 - Class Diagram.png}
+    \centering
+    \caption{Diagramma delle classi}
+    \label{fig:class_diagram}
+\end{figure}
+
+\subsection{Lista concatenata}
+
+Una lista concatenata è una collezione di elementi in cui l'ordine dei dati non dipende loro dalla disposizione in memoria, bensì ogni elemento ha un riferimento all'elemento successivo.
+La struttura dati consiste quindi in una sequenza di nodi, ognuno delle quali contiene un dato e una referenza al nodo successivo, come rappresentato in Figura \ref{fig:linked_list}.
+
+\vspace{5pt}
+Nel caso di implementazione di una coda con priorità tramite una lista concatenata, il dato è un valore intero che rappresenta la priorità del nodo.
+
+\vspace{5pt}
+La lista concatenata realizzata (classe \textbf{LinkedList} in Figura \ref{fig:class_diagram}) implementa i metodi necessari al funzionamento della coda. I nodi sono invece rappresentati dalla classe \textbf{LinkedListNode}.
+
+\vspace{5pt}
+La struttura dati implementata ha una referenza al primo elemento della lista (\emph{head}) e all'ultimo elemento (\emph{tail}).
+
+\begin{figure}[h]
+    \includegraphics[width=0.45\textwidth]{images/LinkedList.png}
+    \centering
+    \caption{Esempio di lista concatenata (Fonte: \href{https://en.wikipedia.org/wiki/Linked_list}{Wikipedia - Linked Lists})}
+    \label{fig:linked_list}
+\end{figure}
+
+Il vantaggio di questa struttura dati è che inserire un nuovo valore è molto veloce, in quanto il nuovo nodo viene inserito in testa, con una complessità di $\Theta(1)$.
+
+\vspace{5pt}
+La rimozione di un valore invece, anche in caso di una semplice coda FIFO (in cui la priorità quindi non è data dal valore, bensì dall'ordine d'inserimento) non ha la stessa complessità, in quanto il valore inserito da più tempo si troverà in fondo alla coda (in posizione \emph{tail}), ma per poterlo rimuovere è necessario modificare il campo \emph{next} del nodo precedente, e quindi è necessario scorrere la lista fino a trovare l'elemento precedente a quello da rimuovere.
+Questo problema potrebbe essere ovviato implementando una lista doppiamente concatenata (rappresentata in Figura \ref{fig:doubly_linked_list}), in cui ogni nodo ha un riferimento sia al nodo precedente che a quello successivo.
+
+\begin{figure}[h]
+    \includegraphics[width=0.6\textwidth]{images/DoublyLinkedList.png}
+    \centering
+    \caption{Lista doppiamente concatenata (Fonte: \href{https://en.wikipedia.org/wiki/Linked_list}{Wikipedia - Linked Lists})}
+    \label{fig:doubly_linked_list}
+\end{figure}
+
+Questo non è necessario nella coda con priorità considerata in questa relazione, in quanto l'elemento con priorità più alta (indicata dal valore (\emph{value}) più alto) potrebbe trovarsi in qualsiasi posizione della lista.
+La ricerca del nodo con priorità massima e la sua rimozione ha quindi complessità di $\Theta(n)$, perché è sempre necessario scorrere tutti gli $n$ elementi della lista per poter trovare il valore a priorità maggiore. Dopo averlo individuato, è necessario modificare il campo \emph{next} del nodo precedente per farlo puntare al nodo successivo (\emph{next}) del nodo rimosso (come rappresentato in Figura \ref{fig:linked_list_remove_node}).
+
+\begin{figure}[h]
+    \includegraphics[width=0.5\textwidth]{images/LinkedList_DeleteNode.png}
+    \centering
+    \caption{Rimozione di un nodo in una lista concatenata (Fonte: \href{https://en.wikipedia.org/wiki/Linked_list}{Wikipedia - Linked Lists})}
+    \label{fig:linked_list_remove_node}
+\end{figure}
+
+\subsection{Lista concatenata ordinata}
+
+La lista concatenata ordinata ha la stessa struttura di una lista concatenata, ma i valori sono ordinati in ordine decrescente.
+
+Sarà quindi necessario modificare l'implementazione dell'inserimento di un nuovo nodo nella lista, scorrendo la lista fino a trovare la posizione corretta (come rappresentato in Figura \ref{fig:sorted_linked_list_insert}).
+Il caso peggiore è quando il dato da inserire è minore di tutti gli $n$ nodi presenti nella lista. Di conseguenza la complessità dell'inserimento è $O(n)$.
+
+\begin{figure}[h]
+    \includegraphics[width=0.5\textwidth]{images/SortedLinkedList_Insert.png}
+    \centering
+    \caption{Inserimento in una lista concatenata ordinata (Fonte: \href{https://en.wikipedia.org/wiki/Linked_list}{Wikipedia - Linked Lists})}
+    \label{fig:sorted_linked_list_insert}
+\end{figure}
+
+Nell'implementazione effettuata, la classe che rappresenta la lista concatenata ordinata è \textbf{SortedLinkedList} in Figura \ref{fig:class_diagram}, che eredita direttamente dalla classe LinkedList.
+
+\vspace{5pt}
+I valori sono stati ordinati in modo decrescente in modo tale da avere l'elemento a priorità più alta (e quindi con valore più alto) in testa alla coda. Questo facilita la rimozione dell'elemento con valore massimo, in quanto sarà sufficiente modificare la testa della lista. Se i valori fossero ordinati in ordine decrescente, l'accesso all'elemento con priorità massima sarebbe stato semplice (elemento in posizione \emph{tail}), ma la sua rimozione avrebbe richiesto lo scorrimento di tutta la lista, in quanto per rimuovere un nodo è necessario modificare il suo predecessore. Per mantenere la stessa complessità utilizzando un ordinamento crescente si sarebbe dovuta implementare una lista doppiamente collegata (rappresentata in Figura \ref{fig:doubly_linked_list}), in cui il predecessore dell'ultimo elemento è facilmente accessibile.
+
+\clearpage
+\subsection{Max Heap}
+
+Un \textbf{Heap} è una struttura dati ad albero binario quasi completo, ossia tutte le foglie dell'albero si trovano nell'ultimo o nel penultimo livello.
+
+\vspace{5pt}
+L'altezza di un nodo è il numero di archi nel cammino semplice più lungo dal nodo ad una foglia. L'altezza dell'heap coincide con l'altezza della radice dell'albero ed è $\Theta(\log_2(n))$.
+
+La struttura dati Heap è utilizzata anche negli algoritmi di ordinamento, ad esempio nell'\textbf{heapsort}.
+
+\vspace{5pt}
+Nel caso di una coda con priorità implementata tramite un heap, il valore del nodo inserito nell'heap indica la priorità.
+
+\vspace{5pt}
+Esistono due tipi di heap: \textbf{Max Heap} e \textbf{Min Heap}.
+Il Max Heap è un heap in cui ogni nodo ha un valore maggiore o uguale a quello dei nodi figli (come in Figura \ref{fig:max_heap_tree}), mentre un Min Heap è un heap nella quale ogni nodo ha valore minore o uguale a quello dei figli.
+
+\begin{figure}[h]
+    \includegraphics[width=0.4\textwidth]{images/Max-Heap tree.png}
+    \centering
+    \caption{Esempio di un albero Max Heap (Fonte: \href{https://en.wikipedia.org/wiki/Heap_(data_structure)}{Wikipedia - Max Heap})}
+    \label{fig:max_heap_tree}
+\end{figure}
+
+Nell'implementazione della coda con priorità è stato considerato che i valori alti indicassero una priorità alta, di conseguenza la struttura dati scelta è stata un Max Heap. In questo modo l'elemento a priorità più alta si troverà nella radice dell'albero.
+
+\vspace{5pt}
+I nodi dell'heap possono essere memorizzati in un array. Questa struttura permette di trovare facilmente i nodi connessi a un qualsiasi nodo, dato l'indice all'interno dell'array.
+In particolare, considerando 0 come la prima posizione dell'array:
+\begin{itemize}
+    \item Radice dell'albero: posizione $0$ dell'array
+    
+    \item Padre del nodo $i$-esimo: posizione $\left \lfloor{\frac{i-1}{2}}\right \rfloor$
+    
+    \item Figlio sinistro del nodo $i$-esimo: posizione $2\times i + 1$
+    
+    \item Figlio destro del nodo $i$-esimo: posizione $2\times i + 2$
+\end{itemize}
+
+Le Figure \ref{fig:max_heap_list} e \ref{fig:max_heap_representation} rappresentano come l'heap è effettivamente salvato in memoria.
+
+\begin{figure}[h]
+    \includegraphics[width=0.5\textwidth]{images/Max-Heap array.png}
+    \centering
+    \caption{Rappresentazione in memoria del Max Heap in Figura \ref{fig:max_heap_tree} (Fonte: \href{https://en.wikipedia.org/wiki/Heap_(data_structure)}{Wikipedia - Max Heap})}
+    \label{fig:max_heap_list}
+\end{figure}
+
+\begin{figure}[h]
+    \includegraphics[width=0.6\textwidth]{images/HeapAsArray.png}
+    \centering
+    \caption{Confronto tra albero Max Heap e rappresentazione in memoria (Fonte: \href{https://en.wikipedia.org/wiki/Heap_(data_structure)}{Wikipedia - Max Heap})}
+    \label{fig:max_heap_representation}
+\end{figure}
+
+L'implementazione del Max Heap è rappresentata nel diagramma delle classi in Figura \ref{fig:class_diagram} come \textbf{MaxHeap}.
+
+\vspace{5pt}
+Oltre alle funzionalità necessarie al funzionamento della coda con priorità, sono stati implementati alcuni metodi aggiuntivi:
+
+\begin{itemize}
+    \item \verb|left_child(index)| (metodo statico): ritorna la posizione del figlio sinistro dell'elemento in posizione \emph{index}
+    
+    \item \verb|right_child(index)| (metodo statico): ritorna la posizione del figlio destro dell'elemento in posizione \emph{index}
+    
+    \item \verb|parent(index)| (metodo statico): ritorna la posizione del nodo padre dell'elemento in posizione \emph{index}
+    
+    \item \verb|max_heapify(index)|: serve a conservare la proprietà del max heap. Prima della chiamata a questo metodo, il nodo in posizione \emph{index} potrebbe essere più piccolo dei suoi figli. Dopo averlo chiamato, il sottoalbero con radice \emph{index} è un max heap
+
+    \item \verb|build_max_heap(array)|: dato un array non ordinato di valori, crea un max heap con quei valori come nodi
+
+    \item \verb|increase_key(index, value)|: incrementa il valore del nodo in posizione \emph{index}, portandolo al valore passato come parametro (\emph{value}) e mantenendo la struttura di max heap
+\end{itemize}
+
+\clearpage
+\subsection{Prestazioni attese}
+
+Sono state confrontate le performance delle operazioni principali delle code con priorità: l'inserimento di un nuovo valore, la ricerca del valore massimo e la sua estrazione.
+
+\subsubsection{Inserimento}
+
+Nel caso di una lista concatenata semplice l'inserimento avviene sempre in testa, quindi la complessità d'inserimento è $\Theta(1)$.
+
+\vspace{5pt}
+In una lista concatenata ordinata bisogna scorrere gli elementi della lista fino a trovare la posizione corretta del nuovo valore. Nel caso migliore l'inserimento avviene in testa, nel caso peggiore invece l'elemento viene inserito in fondo alla lista, dopo aver scorso tutti gli $n$ elementi. La complessità sarà quindi $O(n)$.
+
+\vspace{5pt}
+Per effettuare l'inserimento di un valore in un heap si inserisce un nuovo nodo nell'ultimo livello con valore $-\infty$ in tempo costante, per poi impostarne il valore tramite \verb|increase_key(index, value)|, che garantisce il mantenimento delle proprietà del max heap. La complessità dell'inserimento è quindi $O(\log_2(n))$.
+
+\subsubsection{Ricerca del valore massimo}
+
+In una lista concatenata semplice gli elementi non hanno un ordine, di conseguenza per trovare il nodo con valore massimo è necessario scorrere tutti i valori.
+La complessità è quindi $\Theta(n)$.
+
+\vspace{5pt}
+In una lista concatenata ordinata, dato che i valori sono ordinati in modo decrescente, l'elemento con valore massimo si troverà nella prima posizione (\emph{head}). L'accesso a questo elemento avverrà in tempo costante (complessità $\Theta(1)$).
+
+\vspace{5pt}
+In un max heap l'elemento con valore massimo si trova nella radice dell'albero, in posizione $0$ della lista memorizzata. La complessità della ricerca del massimo è quindi $\Theta(1)$.
+
+\subsubsection{Estrazione del valore massimo}
+
+In una lista concatenata semplice, dopo aver trovato il valore da rimuovere, questo dev'essere scollegato dalla lista come mostrato in Figura \ref{fig:linked_list_remove_node}. Il caso peggiore è lo stesso della ricerca del valore massimo, di conseguenza la complessità è $\Theta(n)$.
+
+\vspace{5pt}
+Nella lista concatenata ordinata, come nel caso della ricerca, il costo della rimozione è costante ($\Theta(1)$) in quanto è necessario soltanto aggiornare il primo elemento (\emph{head}) della lista.
+
+\vspace{5pt}
+Nell'heap è necessario rimuovere il valore alla radice per poter estrarre il valore massimo. Per mantenere le proprietà del max heap, l'elemento nella radice viene sostituito con l'ultimo elemento della lista memorizzata, che è una foglia, e poi viene chiamato il metodo \verb|max_heapify(0)|, che sistema l'albero per farlo rimanere un max heap. Il costo di questa operazione è $O(\log_2(n))$, in quanto la foglia inserita come radice scenderà l'albero di un livello alla volta finché l'albero non sarà di nuovo un max heap, e il massimo numero di livelli presenti nell'albero è $\log_2(n)$.
+
+\begin{table}[h]
+\centering
+\resizebox{\textwidth}{!}{%
+    \begin{tabular}{cccc}
+        \hline
+        Struttura dati             & Inserimento    & Ricerca massimo & Estrazione massimo \\ \hline
+        Lista concatenata          & $\Theta(1)$    & $\Theta(n)$          & $\Theta(n)$             \\
+        Lista concatenata ordinata & $O(n)$         & $\Theta(1)$     & $\Theta(1)$             \\
+        Max Heap                   & $O(\log_2(n))$ & $\Theta(1)$     & $O(\log_2(n))$     \\ \hline
+    \end{tabular}%
+}
+\caption{Prestazioni attese}
+\label{tab:performance}
+\end{table}
+
+\section{Descrizione dei test effettuati}
+
+Per ogni implementazione della coda con priorità, ogni funzione è stata testata con un numero incrementale di valori, partendo da 1 fino a raggiungere i 1000 valori, con un salto di 50 valori ad ogni iterazione. Di conseguenza sono stati svolti in totale 20 test, con il numero di valori riportato nella prima colonna delle Tabelle in sezione \ref{tables}.
+
+\vspace{5pt}
+Per ottenere dei valori più affidabili, ogni test è stato eseguito 100 volte, ed è stata fatta una media dei tempi di esecuzione. In questo modo è stata ridotta l'influenza degli altri task in esecuzione sulla macchina durante l'esecuzione dei test.
+
+\vspace{5pt}
+La misurazione dei tempi di esecuzione è stata effettuata tramite il metodo \verb|timeit(stmt, number)| del modulo Python \verb|timeit|. Il primo parametro (\emph{stmt}) è la funzione da eseguire, mentre il secondo parametro (\emph{number}) è il numero di volte che verrà eseguita. La funzione ritorna il tempo di esecuzione totale dei test effettuati.
+
+\vspace{5pt}
+I test funzionano su una copia della coda ricevuta come parametro, perché eseguono ripetutamente delle operazioni che modificano la struttura della lista. Se questo non accadesse, dopo ogni operazione la lista risulterebbe diversa rispetto alla precedente iterazione, risultando in un test errato.
+
+Ad esempio, se in una coda con 100 elementi venisse testata 100 volte l'operazione i estrazione del massimo, al termine dei test la coda risulterebbe vuota. Creando una copia della lista prima di ogni test invece, l'estrazione del massimo avviene ogni volta su una coda con lo stesso numero di elementi.
+
+\section{Grafici dei tempi di esecuzione}\label{grafici}
+
+Di seguito sono riportati i grafici che permettono il confronto tra le prestazioni misurate riguardo le varie implementazioni della coda.
+I grafici mostrano la variazione del tempo di esecuzione delle funzioni della coda con priorità, al variare del numero di elementi.
+
+\begin{figure}[h]
+    \includegraphics[width=0.8\textwidth]{plots/Inserimento.png}
+    \centering
+    \caption{Tempi di esecuzione dell'inserimento di n valori nella coda}
+    \label{fig:plot_insert}
+\end{figure}
+
+\begin{figure}[h]
+    \includegraphics[width=0.8\textwidth]{plots/Ricerca del massimo.png}
+    \centering
+    \caption{Tempi di esecuzione della ricerca del valore massimo al variare del numero di elementi nella coda}
+    \label{fig:plot_find_max}
+\end{figure}
+
+\begin{figure}[h]
+    \includegraphics[width=0.8\textwidth]{plots/Estrazione del massimo.png}
+    \centering
+    \caption{Tempi di esecuzione dell'estrazione del valore massimo al variare del numero di elementi nella coda}
+    \label{fig:plot_extract_max}
+\end{figure}
+
+\clearpage
+\section{Tabelle dei tempi di esecuzione}\label{tables}
+
+Di seguito sono riportate le tabelle contenenti i tempi di esecuzione delle operazioni svolte sulla coda con priorità con la quale sono stati tracciati i grafici nella sezione \ref{grafici}, al variare del numero di elementi.
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{tables/Tempi inserimento.png}
+    \centering
+    \caption{Tempi di esecuzione dell'inserimento di n valori nella coda (in ms)}
+    \label{fig:table_insert}
+\end{figure}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{tables/Tempi ricerca del del massimo.png}
+    \centering
+    \caption{Tempi di esecuzione della ricerca del valore massimo da una coda di n elementi (in ms)}
+    \label{fig:table_find_max}
+\end{figure}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{tables/Tempi estrazione del massimo.png}
+    \centering
+    \caption{Tempi di esecuzione dell'estrazione del valore massimo da una coda di n elementi (in ms)}
+    \label{fig:table_extract_max}
+\end{figure}
+
+\clearpage
+\section{Osservazioni sui risultati}
+
+\subsection{Inserimento}
+
+La tabella in Figura \ref{fig:table_insert} mostra i valori dei tempi di esecuzione dell'inserimento nelle diverse implementazioni della coda con priorità.
+
+Tramite questi valori è stato creato il grafico in Figura \ref{fig:plot_insert}, che mostra visivamente la complessità dell'inserimento.
+
+\vspace{5pt}
+Come previsto, l'inserimento in una lista concatenata semplice ha costo costante, e i tempi di esecuzione sono molto inferiori rispetto alle altre due implementazioni.
+
+\vspace{5pt}
+Con la lista concatenata ordinata invece, l'inserimento è un'operazione molto costosa. Dalla linea arancione in Figura \ref{fig:plot_insert} è possibile notare che i tempi di esecuzione aumentano linearmente all'aumentare del numero di valori nella lista.
+
+\vspace{5pt}
+Il costo dell'inserimento in un heap cresce in modo nettamente inferiore rispetto a una lista concatenata ordinata, infatti la complessità dell'inserimento nell'heap è $O(\log_2(n))$, mentre nella lista concatenata ordinata è $O(n)$.
+Il costo rimane comunque superiore rispetto all'inserimento nella lista concatenata semplice, in cui la complessità è $\Theta(1)$.
+
+\subsection{Ricerca del valore massimo}
+
+La tabella in Figura \ref{fig:table_find_max} mostra i valori dei tempi di esecuzione della ricerca del valore massimo.
+
+Tramite questi valori è stato creato il grafico in Figura \ref{fig:plot_find_max}, che mostra visivamente la complessità della ricerca.
+
+\vspace{5pt}
+A differenza dell'inserimento, con una lista concatenata semplice la ricerca del massimo è un'operazione molto dispendiosa. Dal grafico infatti è possibile delineare una crescita lineare dei tempi di esecuzione, come previsto dalla sezione teorica.
+
+\vspace{5pt}
+Con la lista concatenata ordinata e con l'heap, data la loro struttura, la ricerca del valore massimo avviene con un numero costante di operazioni (quindi con complessità $\Theta(1)$). L'andamento del loro grafico è infatti costante, con valori dei tempi di esecuzione (riportati nella tabella \ref{fig:table_find_max}) di due ordini di grandezza inferiori rispetto a quelli della lista concatenata semplice.
+
+\subsection{Estrazione del valore massimo}
+
+La tabella in Figura \ref{fig:table_extract_max} mostra i valori dei tempi di esecuzione dell'estrazione del valore massimo.
+
+Tramite questi valori è stato creato il grafico in Figura \ref{fig:plot_extract_max}, che mostra visivamente la complessità dell'estrazione.
+
+\vspace{5pt}
+Nella lista concatenata, come nel caso della ricerca del valore massimo, i tempi di esecuzione crescono linearmente al crescere dei valori nella coda.
+
+\vspace{5pt}
+Il costo dell'estrazione del massimo rimane lo stesso della ricerca nel caso della lista concatenata ordinata, mentre l'heap ha un costo maggiore in quanto dopo aver rimosso l'elemento nella radice si devono effettuare delle operazioni per mantenere le proprietà di max heap, che hanno un costo logaritmico.
+
+\subsection{Conclusioni}
+
+L'analisi della complessità degli algoritmi effettuata a livello teorico è stata confermata dai test e dalle misurazioni svolte sperimentalmente.
+
+\vspace{5pt}
+Con una lista concatenata l'inserimento è molto rapido, ma è lenta la ricerca ed estrazione del valore massimo.
+
+\vspace{5pt}
+In lista concatenata ordinata l'inserimento è lento inserimento, ma l'estrazione del valore massimo è rapida.
+
+\vspace{5pt}
+Un Max Heap offre un compromesso tra le strutture dati considerate, in quanto sia l'inserimento che l'estrazione del massimo hanno una complessità logaritmica, e la ricerca del valore massimo avviene in tempo costante.
+
+\clearpage
+\begin{thebibliography}{9}
+    \bibitem{wikipedia_linkedlist}
+    Wikipedia - Linked List (\href{https://en.wikipedia.org/wiki/Linked_list}{URL})
+    \par
+    Fonte delle Figure \ref{fig:linked_list}, \ref{fig:doubly_linked_list}, \ref{fig:linked_list_remove_node}, \ref{fig:sorted_linked_list_insert}
+
+    \bibitem{prepinsta_sorted_list}
+    PrepInsta - Sorted Linked Lists (\href{https://prepinsta.com/c-program/to-insert-an-element-in-a-sorted-linked-list/}{URL})
+
+    \bibitem{wikipedia_heap}
+    Wikipedia - Heap (\href{https://en.wikipedia.org/wiki/Heap_(data_structure)}{URL})
+    \par Fonte delle Figure \ref{fig:max_heap_tree}, \ref{fig:max_heap_list}, \ref{fig:max_heap_representation}
+\end{thebibliography}
+\end{document}
